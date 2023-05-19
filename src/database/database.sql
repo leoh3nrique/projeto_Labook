@@ -7,6 +7,7 @@ CREATE TABLE users(
     role TEXT NOT NULL,
     created_at TEXT DEFAULT(DATETIME()) NOT NULL
 );
+SELECT * FROM users;
 
 CREATE TABLE posts(
     id TEXT NOT NULL UNIQUE PRIMARY KEY,
