@@ -9,6 +9,9 @@ CREATE TABLE users(
 );
 SELECT * FROM users;
 
+INSERT INTO users
+VALUES("a001","Leonardo","hgtleohgt@gmail.com","leo123","estudante","2021-02-10");
+
 CREATE TABLE posts(
     id TEXT NOT NULL UNIQUE PRIMARY KEY,
     creator_id TEXT NOT NULL,
