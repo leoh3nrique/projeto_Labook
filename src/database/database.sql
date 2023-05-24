@@ -9,6 +9,9 @@ CREATE TABLE users(
 );
 SELECT * FROM users;
 
+--senhas
+--leo123
+
 INSERT INTO users
 VALUES("a001","Leonardo","hgtleohgt@gmail.com","leo123","estudante","2021-02-10");
 

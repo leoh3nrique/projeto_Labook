@@ -3,36 +3,30 @@ import express, { Request, Response } from "express"
 import { CreateUserSchema } from "../dtos/createUserDto"
 import { BaseError } from "../errors/BaseError"
 import { ZodError } from "zod"
+import { createSignupSchema } from "../dtos/signup.dto"
+import { LoginSchema } from "../dtos/login.dto"
 
 
 export class UserController {
     constructor(
         private userBusiness: UserBusiness
     ) { }
-    public getUsers = async (req: Request, res: Response) => {
+   
+    public signup = async (req: Request, res: Response) => {
         try {
-            const output = await this.userBusiness.getUsers()
-            console.log(output)
-            res.status(200).send(output)
-        } catch (error) {
-            console.log(error)
-        }
-    }
-    public createUser = async (req: Request, res: Response) => {
-
-        try {
-            const input = CreateUserSchema.parse({
-                id: req.body.id,
+            const input = createSignupSchema.parse({
                 name: req.body.name,
                 email: req.body.email,
-                password: req.body.password,
-                role: req.body.role
+                password: req.body.password
             })
 
-            const output = await this.userBusiness.createUsers(input)
+            const output = await this.userBusiness.signup(input)
+
             res.status(201).send(output)
-            
+
+
         } catch (error) {
+            console.log(error)
             if (error instanceof ZodError) {
                 res.status(400).send(error.issues)
             } else if (error instanceof BaseError) {
@@ -42,5 +36,28 @@ export class UserController {
             }
         }
     }
+    public login = async (req: Request, res: Response) => {
+        try {
+            const input = LoginSchema.parse({
+                email:req.body.email,
+                password:req.body.email
+            })
+           const output = await this.userBusiness.login(input)
+
+           res.status(200).send(output)
+
+
+        } catch (error) {
+            console.log(error)
+            if (error instanceof ZodError) {
+                res.status(400).send(error.issues)
+            } else if (error instanceof BaseError) {
+                res.status(error.statusCode).send(error.message)
+            } else {
+                res.status(500).send("Erro inesperado")
+            }
+        }
+    }
+
 
 }

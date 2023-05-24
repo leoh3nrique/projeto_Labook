@@ -1,18 +1,33 @@
+export enum USER_ROLES{
+    NORMAL="Normal",
+    ADMIN="Admin"
+}
+
+export interface TokenPayload {
+    id: string,
+    name: string,
+    role: USER_ROLES
+}
+
+
+
 export interface UserDB {
     id: string,
     name: string,
     email: string,
     password: string,
-    role: string,
+    role: USER_ROLES,
     created_at: string
 }
+
+
 export class User{
     constructor(
         private id:string,
         private name:string,
         private email:string,
         private password:string,
-        private role:string,
+        private role:USER_ROLES,
         private createdAt:string,
     ){}
 
@@ -42,10 +57,10 @@ export class User{
     public setPassword(value:string):void{
         this.password = value
     }
-    public getRole():string{
+    public getRole():USER_ROLES{
         return this.role
     }
-    public setRole(value:string):void{
+    public setRole(value:USER_ROLES):void{
         this.role = value
     }
     public getCreatedAt():string{
