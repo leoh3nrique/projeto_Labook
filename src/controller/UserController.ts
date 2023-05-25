@@ -1,17 +1,17 @@
 import { UserBusiness } from "../business/UserBusiness"
 import express, { Request, Response } from "express"
-import { CreateUserSchema } from "../dtos/createUserDto"
+import { CreateUserSchema } from "../dtos/users/createUserDto"
 import { BaseError } from "../errors/BaseError"
 import { ZodError } from "zod"
-import { createSignupSchema } from "../dtos/signup.dto"
-import { LoginSchema } from "../dtos/login.dto"
+import { createSignupSchema } from "../dtos/users/signup.dto"
+import { LoginSchema } from "../dtos/users/login.dto"
 
 
 export class UserController {
     constructor(
         private userBusiness: UserBusiness
     ) { }
-   
+
     public signup = async (req: Request, res: Response) => {
         try {
             const input = createSignupSchema.parse({
@@ -39,12 +39,12 @@ export class UserController {
     public login = async (req: Request, res: Response) => {
         try {
             const input = LoginSchema.parse({
-                email:req.body.email,
-                password:req.body.email
+                email: req.body.email,
+                password: req.body.email
             })
-           const output = await this.userBusiness.login(input)
+            const output = await this.userBusiness.login(input)
 
-           res.status(200).send(output)
+            res.status(200).send(output)
 
 
         } catch (error) {
