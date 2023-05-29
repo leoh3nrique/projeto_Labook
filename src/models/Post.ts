@@ -5,7 +5,7 @@ export interface PostDb {
     likes: number,
     dislikes: number,
     created_at: string,
-    updated_at: string
+    update_at: string
 }
 
 export class Post{
