@@ -6,6 +6,7 @@ import { PostBusiness } from "../business/PostBusiness"
 import { GetPostSchema } from "../dtos/posts/getPosts.dto"
 import { EditPostSchema } from "../dtos/posts/editPost.dt"
 import { DeletePostSchema } from "../dtos/posts/deletePost.dto"
+import { LikesDislikesSchema } from "../dtos/posts/likesDislikes.dto"
 
 export class PostController {
     constructor(
@@ -95,6 +96,28 @@ export class PostController {
 
             
 
+        } catch (error) {
+            console.log(error)
+            if (error instanceof ZodError) {
+                res.status(400).send(error.issues)
+            } else if (error instanceof BaseError) {
+                res.status(error.statusCode).send(error.message)
+            } else {
+                res.status(500).send("Erro inesperado")
+            }
+        }
+    }
+
+    public likesDislikes = async (req: Request, res: Response) => {
+        try {
+           const input = LikesDislikesSchema.parse({
+                id:req.params.id,
+                token:req.headers.authorization,
+                like:req.body.like
+           })
+           const output = await this.postBusiness.getLikesDislikes(input)
+
+           res.status(200).send(output)
         } catch (error) {
             console.log(error)
             if (error instanceof ZodError) {

@@ -15,7 +15,7 @@ SELECT * FROM users;
 INSERT INTO users
 VALUES("a001","Leonardo","hgtleohgt@gmail.com","leo123","estudante","2021-02-10");
 
-CREATE TABLE posts(
+CREATE TABLE posts(     
     id TEXT NOT NULL UNIQUE PRIMARY KEY,
     creator_id TEXT NOT NULL,
     content TEXT NOT NULL,
@@ -32,3 +32,5 @@ CREATE TABLE likes_dislikes(
     Foreign Key (user_id) REFERENCES users(id),
     Foreign Key (post_id) REFERENCES posts(id)
 );
+
+ALTER TABLE likes_dislikes ADD COLUMN like INTEGER NOT NULL; 

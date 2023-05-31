@@ -3,6 +3,7 @@ import { CreatePostInputDto } from "../dtos/posts/createPost.dto";
 import { DeletePostInputDto } from "../dtos/posts/deletePost.dto";
 import { EditPostInputDto, EditPostOutputDto } from "../dtos/posts/editPost.dt";
 import { GetPostInputDto, GetPostOutputDto } from "../dtos/posts/getPosts.dto";
+import { LikesDislikesDB, LikesDislikesInputDto, LikesDislikesOutputDto } from "../dtos/posts/likesDislikes.dto";
 import { BadRequestError } from "../errors/BadRequestError";
 import { NotFoundError } from "../errors/NotFoundError";
 import { Post, PostDb } from "../models/Post";
@@ -14,8 +15,10 @@ export class PostBusiness {
     constructor(
         private postDatabase: PostDatabase,
         private idGenerator: IdGenerator,
-        private tokenManager: TokenManager
+        private tokenManager: TokenManager,
+
     ) { }
+
     public getPosts = async (input: GetPostInputDto): Promise<GetPostOutputDto[]> => {
         const { token } = input
 
@@ -24,45 +27,33 @@ export class PostBusiness {
         if (getPayload === null) {
             throw new BadRequestError("token inválido")
         }
-        const data = await this.postDatabase.getPosts()
+        const data = await this.postDatabase.getPostsWithCreatorName()
 
-        if (!data) {
-            throw new NotFoundError("Não foi encontrado nenhum post desse usuario")
-        }
 
-        const post: Post[] = data.map((post) => new Post(
-            post.id,
-            post.creator_id,
-            post.content,
-            post.likes,
-            post.dislikes,
-            post.created_at,
-            post.update_at
-        ))
+        const posts = await Promise.all(
+            data.map(async (post) => {
+                const postWithCreatorName = new Post(
+                    post.id,
+                    post.content,
+                    post.likes,
+                    post.dislikes,
+                    post.created_at,
+                    post.update_at,
+                    post.creator_id,
+                    post.creator_name
+                );
+                const likeCount = await this.postDatabase.countHowMuchLikesHave(postWithCreatorName.getId());
+                const dislikeCount = await this.postDatabase.countHowMuchDislikesHave(postWithCreatorName.getId());
+                postWithCreatorName.setLikes(Number(likeCount.contagem));
+                postWithCreatorName.setDislikes(Number(dislikeCount.contagem));
+                return postWithCreatorName.toModel();
+            })
+        );
 
-        const output: GetPostOutputDto[] = []
-
-        for (const elem of post) {
-            const getPostOutput: GetPostOutputDto = {
-                id: elem.getId(),
-                content: elem.getContent(),
-                likes: elem.getLikes(),
-                dislikes: elem.getDislikes(),
-                createdAt: elem.getCreatedAt(),
-                updatedAt: elem.getUpdatedAt(),
-                creator: {
-                    id: elem.getCreatorId(),
-                    name: getPayload.name
-                }
-
-            };
-
-            output.push(getPostOutput);
-        }
-
+        const output: GetPostOutputDto[] = posts
         return output
     }
-    
+
     public createPost = async (input: CreatePostInputDto) => {
         const { content, token } = input
 
@@ -74,29 +65,21 @@ export class PostBusiness {
             throw new BadRequestError("token inválido")
         }
 
-        const post = new Post(
-            id,
-            payload.id,
-            content,
-            0,
-            0,
-            new Date().toISOString(),
-            new Date().toISOString()
-        )
+        const newPostDb = (): PostDb => {
+            const newPost = new Post(
+                id,
+                content,
+                0,
+                0,
+                new Date().toISOString(),
+                new Date().toISOString(),
+                payload.id,
+                payload.name
 
-        const postDB: PostDb = {
-            id: post.getId(),
-            creator_id: post.getCreatorId(),
-            content: post.getContent(),
-            likes: post.getLikes(),
-            dislikes: post.getDislikes(),
-            created_at: post.getCreatedAt(),
-            update_at: post.getUpdatedAt()
+            )
+            return newPost.toDBModel()
         }
-
-        await this.postDatabase.createPost(postDB)
-
-
+        await this.postDatabase.createPost(newPostDb())
     }
     public editPost = async (input: EditPostInputDto): Promise<EditPostOutputDto> => {
         const { token, id, content } = input
@@ -117,26 +100,22 @@ export class PostBusiness {
             throw new BadRequestError("Não tem acesso para editar esse post")
         }
 
-        const updatedPost = new Post(
-            data.id,
-            data.creator_id,
-            content,
-            data.likes,
-            data.dislikes,
-            data.created_at,
-            new Date().toISOString()
-        )
-        const updatedPostDB: PostDb = {
-            id: updatedPost.getId(),
-            creator_id: updatedPost.getCreatorId(),
-            content: updatedPost.getContent(),
-            likes: updatedPost.getLikes(),
-            dislikes: updatedPost.getDislikes(),
-            created_at: updatedPost.getCreatedAt(),
-            update_at: updatedPost.getUpdatedAt()
+
+        const updatedPostDB = (): PostDb => {
+            const post = new Post(
+                data.id,
+                content,
+                data.likes,
+                data.dislikes,
+                data.created_at,
+                new Date().toISOString(),
+                data.creator_id,
+                getPayload.name)
+            return post.toDBModel()
         }
 
-        await this.postDatabase.updatePost(updatedPostDB, id)
+
+        await this.postDatabase.updatePost(updatedPostDB(), id)
 
         const output: EditPostOutputDto = {
             content: content
@@ -166,4 +145,44 @@ export class PostBusiness {
 
 
     }
+
+    public getLikesDislikes = async (input: LikesDislikesInputDto): Promise<LikesDislikesOutputDto> => {
+        const { id, token, like } = input
+
+        const payload = this.tokenManager.getPayload(token)
+        if (payload === null) {
+            throw new BadRequestError("token inválido")
+        }
+        const [postDb] = await this.postDatabase.findPostLikeByPostId(id)
+
+        if (!postDb) {
+            const [result] = await this.postDatabase.findPostByPostId(id)
+            console.log(result)
+
+            if (result.creator_id === payload.id) {
+                throw new BadRequestError("Você nao pode dar like no seu propro post")
+            }
+            const input: LikesDislikesDB = {
+                post_id: id,
+                user_id: payload.id,
+                like: like
+            }
+            await this.postDatabase.insertLikeInPost(input)
+        } else {
+            if (postDb.like === 1 && like === true) {
+                await this.postDatabase.deletePostFromTable(postDb.post_id)
+            }
+            else if (postDb.like === 0 && like === false) {
+                await this.postDatabase.deletePostFromTable(postDb.post_id)
+            }
+        }
+
+        const output = {
+            like: like
+        }
+
+        return output as LikesDislikesOutputDto
+
+    }
+
 }

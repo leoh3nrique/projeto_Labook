@@ -10,10 +10,10 @@ export interface GetPostOutputDto{
     likes:number
     dislikes:number
     createdAt:string
-    updatedAt:string
+    updateAt:string
     creator:{
-        id:string,
-        name:string
+        creatorId:string,
+        creatorName:string
     }
 }
 
