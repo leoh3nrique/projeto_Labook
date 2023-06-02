@@ -12,8 +12,6 @@ SELECT * FROM users;
 --senhas
 --leo123
 
-INSERT INTO users
-VALUES("a001","Leonardo","hgtleohgt@gmail.com","leo123","estudante","2021-02-10");
 
 CREATE TABLE posts(     
     id TEXT NOT NULL UNIQUE PRIMARY KEY,
@@ -24,13 +22,20 @@ CREATE TABLE posts(
     created_at TEXT DEFAULT(DATETIME()) NOT NULL,
     update_at TEXT DEFAULT(DATETIME()) NOT NULL,
     Foreign Key (creator_id) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 );
+
 
 CREATE TABLE likes_dislikes(
     user_id TEXT NOT NULL,
     post_id TEXT NOT NULL,
-    Foreign Key (user_id) REFERENCES users(id),
+    like INTEGER NOT NULL,
+    Foreign Key (user_id) REFERENCES users(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
     Foreign Key (post_id) REFERENCES posts(id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
 );
-
-ALTER TABLE likes_dislikes ADD COLUMN like INTEGER NOT NULL; 
+ 

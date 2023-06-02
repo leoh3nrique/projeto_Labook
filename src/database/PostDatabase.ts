@@ -3,8 +3,6 @@ import { PostDb, PostDbWithCreatorName } from "../models/Post";
 import { BaseDatabase } from "./BaseDatabase";
 
 export class PostDatabase extends BaseDatabase{
-
-
     public async getPostsWithCreatorName (){
         const result = await BaseDatabase
         .connection("posts")
@@ -18,7 +16,6 @@ export class PostDatabase extends BaseDatabase{
         "posts.update_at",
         "posts.creator_id",
         "users.name as creator_name")
-
         return result as PostDbWithCreatorName[]
     }
 
@@ -42,7 +39,7 @@ export class PostDatabase extends BaseDatabase{
         return result
     }
 
-    public async createPost(input:PostDb) {
+    public async createPost(input:PostDb):Promise<void> {
         await BaseDatabase.connection("posts").insert(input)
     }
 

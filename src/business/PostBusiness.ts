@@ -1,11 +1,12 @@
 import { PostDatabase } from "../database/PostDatabase";
 import { CreatePostInputDto } from "../dtos/posts/createPost.dto";
 import { DeletePostInputDto } from "../dtos/posts/deletePost.dto";
-import { EditPostInputDto, EditPostOutputDto } from "../dtos/posts/editPost.dt";
+import { EditPostInputDto} from "../dtos/posts/editPost.dt";
 import { GetPostInputDto, GetPostOutputDto } from "../dtos/posts/getPosts.dto";
-import { LikesDislikesDB, LikesDislikesInputDto, LikesDislikesOutputDto } from "../dtos/posts/likesDislikes.dto";
+import { LikesDislikesDB, LikesDislikesInputDto} from "../dtos/posts/likesDislikes.dto";
 import { BadRequestError } from "../errors/BadRequestError";
 import { NotFoundError } from "../errors/NotFoundError";
+import { UnauthorizedError } from "../errors/UnauthorizedError";
 import { Post, PostDb } from "../models/Post";
 import { USER_ROLES } from "../models/User";
 import { IdGenerator } from "../services/IdGenerator";
@@ -22,14 +23,17 @@ export class PostBusiness {
     public getPosts = async (input: GetPostInputDto): Promise<GetPostOutputDto[]> => {
         const { token } = input
 
-        const getPayload = this.tokenManager.getPayload(token)
+        const payload = this.tokenManager.getPayload(token)
 
-        if (getPayload === null) {
+        if (payload === null) {
             throw new BadRequestError("token inválido")
         }
+
+        if (payload.role !== USER_ROLES.ADMIN) {
+            throw new UnauthorizedError("Só admin pode acessar essas informações.")
+        }
+
         const data = await this.postDatabase.getPostsWithCreatorName()
-
-
         const posts = await Promise.all(
             data.map(async (post) => {
                 const postWithCreatorName = new Post(
@@ -54,16 +58,17 @@ export class PostBusiness {
         return output
     }
 
-    public createPost = async (input: CreatePostInputDto) => {
+    public createPost = async (input: CreatePostInputDto):Promise<void> => {
         const { content, token } = input
 
-        const id = this.idGenerator.generate()
-
+        
         const payload = this.tokenManager.getPayload(token)
-
+        
         if (payload === null) {
             throw new BadRequestError("token inválido")
         }
+
+        const id = this.idGenerator.generate()
 
         const newPostDb = (): PostDb => {
             const newPost = new Post(
@@ -81,7 +86,8 @@ export class PostBusiness {
         }
         await this.postDatabase.createPost(newPostDb())
     }
-    public editPost = async (input: EditPostInputDto): Promise<EditPostOutputDto> => {
+
+    public editPost = async (input: EditPostInputDto): Promise<void> => {
         const { token, id, content } = input
 
         const getPayload = this.tokenManager.getPayload(token)
@@ -97,9 +103,8 @@ export class PostBusiness {
         }
 
         if (data.creator_id !== getPayload.id) {
-            throw new BadRequestError("Não tem acesso para editar esse post")
+            throw new UnauthorizedError("Não tem acesso para editar esse post")
         }
-
 
         const updatedPostDB = (): PostDb => {
             const post = new Post(
@@ -114,13 +119,8 @@ export class PostBusiness {
             return post.toDBModel()
         }
 
-
         await this.postDatabase.updatePost(updatedPostDB(), id)
 
-        const output: EditPostOutputDto = {
-            content: content
-        }
-        return output
     }
 
     public deletePost = async (input: DeletePostInputDto) => {
@@ -138,18 +138,18 @@ export class PostBusiness {
         }
 
         if (postDB.creator_id !== payload.id && payload.role !== USER_ROLES.ADMIN) {
-            throw new BadRequestError("Você não pode excluir essas informacoes")
+            throw new UnauthorizedError("Você não pode excluir essas informacoes")
         }
 
         await this.postDatabase.deletePost(id)
 
-
     }
 
-    public getLikesDislikes = async (input: LikesDislikesInputDto): Promise<LikesDislikesOutputDto> => {
+    public getLikesDislikes = async (input: LikesDislikesInputDto): Promise<void> => {
         const { id, token, like } = input
 
         const payload = this.tokenManager.getPayload(token)
+
         if (payload === null) {
             throw new BadRequestError("token inválido")
         }
@@ -157,7 +157,6 @@ export class PostBusiness {
 
         if (!postDb) {
             const [result] = await this.postDatabase.findPostByPostId(id)
-            console.log(result)
 
             if (result.creator_id === payload.id) {
                 throw new BadRequestError("Você nao pode dar like no seu propro post")
@@ -177,11 +176,8 @@ export class PostBusiness {
             }
         }
 
-        const output = {
-            like: like
-        }
 
-        return output as LikesDislikesOutputDto
+        
 
     }
 

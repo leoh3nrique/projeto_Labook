@@ -6,9 +6,7 @@ export interface LikesDislikesInputDto{
     like:boolean
 }
 
-export interface LikesDislikesOutputDto{
-    like:boolean
-}
+
 
 export interface LikesDislikesDB{
     post_id:string

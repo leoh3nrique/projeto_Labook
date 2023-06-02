@@ -7,9 +7,7 @@ export interface EditPostInputDto{
     
 }
 
-export interface EditPostOutputDto{
-    content:string
-}
+
 
 export const EditPostSchema = z.object({
     token:z.string().min(1),

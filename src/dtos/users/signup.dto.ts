@@ -8,7 +8,6 @@ export interface SignupInputDto{
 }
 
 export interface SignupOutputDto{
-    message:string,
     token:string
 }
 

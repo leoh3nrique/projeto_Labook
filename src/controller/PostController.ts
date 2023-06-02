@@ -44,7 +44,7 @@ export class PostController {
 
             await this.postBusiness.createPost(input)
             
-            res.status(201).send("deu certo")
+            res.status(201).send()
 
         } catch (error) {
             console.log(error)
@@ -58,7 +58,7 @@ export class PostController {
         }
     }
 
-    public editPost = async (req: Request, res: Response) => {
+    public editPost = async (req: Request, res: Response):Promise<void> => {
         try {
             const input = EditPostSchema.parse({
                 token:req.headers.authorization,
@@ -66,9 +66,9 @@ export class PostController {
                 content:req.body.content
             })
 
-            const output = await this.postBusiness.editPost(input)
+            await this.postBusiness.editPost(input)
 
-            res.status(201).send(output)
+            res.status(201).send()
         
 
         } catch (error) {
@@ -92,8 +92,7 @@ export class PostController {
 
            await this.postBusiness.deletePost(input)
 
-           res.status(200).send("Excluido com sucesso")
-
+           res.status(200).send()
             
 
         } catch (error) {
@@ -115,9 +114,9 @@ export class PostController {
                 token:req.headers.authorization,
                 like:req.body.like
            })
-           const output = await this.postBusiness.getLikesDislikes(input)
+           await this.postBusiness.getLikesDislikes(input)
 
-           res.status(200).send(output)
+           res.status(200).send()
         } catch (error) {
             console.log(error)
             if (error instanceof ZodError) {
