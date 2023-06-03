@@ -18,7 +18,6 @@ export class PostDatabase extends BaseDatabase{
         "users.name as creator_name")
         return result as PostDbWithCreatorName[]
     }
-
     public async countHowMuchLikesHave (id:string){
         const [result] = await BaseDatabase.connection("likes_dislikes").count("* as contagem").where({post_id:id, like:1})
         return result 
@@ -27,8 +26,6 @@ export class PostDatabase extends BaseDatabase{
         const [result] = await BaseDatabase.connection("likes_dislikes").count("* as contagem").where({post_id:id, like:0})
         return result 
     }
-
-
     public async findPostsByUserId(userId:string): Promise<PostDb[]>{
         const result = await BaseDatabase.connection("posts").where({creator_id:userId})
         return result
@@ -52,15 +49,20 @@ export class PostDatabase extends BaseDatabase{
     }
 
 
-    public async findPostLikeByPostId (idToFind:string){
-        const result = await BaseDatabase.connection("likes_dislikes").where({post_id:idToFind})
+    public async findLikeInTableLikesByUserId (idToFind:string){
+        const result = await BaseDatabase.connection("likes_dislikes").where({user_id:idToFind})
         return result
     }
     public async insertLikeInPost (input:LikesDislikesDB){
         await BaseDatabase.connection("likes_dislikes").insert(input)
     }
-    public async deletePostFromTable (id:string){
-        await BaseDatabase.connection("likes_dislikes").del().where({post_id:id})
+
+    public async editLikeInPostByUserId (like:boolean, id:string){
+        await BaseDatabase.connection("likes_dislikes").update({like:like}).where({user_id:id})
+    }
+
+    public async deleteLikeFromTableLikes (id:string){
+        await BaseDatabase.connection("likes_dislikes").del().where({user_id:id})
     }
    
 }

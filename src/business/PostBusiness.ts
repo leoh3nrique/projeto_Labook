@@ -1,9 +1,9 @@
 import { PostDatabase } from "../database/PostDatabase";
 import { CreatePostInputDto } from "../dtos/posts/createPost.dto";
 import { DeletePostInputDto } from "../dtos/posts/deletePost.dto";
-import { EditPostInputDto} from "../dtos/posts/editPost.dt";
+import { EditPostInputDto } from "../dtos/posts/editPost.dt";
 import { GetPostInputDto, GetPostOutputDto } from "../dtos/posts/getPosts.dto";
-import { LikesDislikesDB, LikesDislikesInputDto} from "../dtos/posts/likesDislikes.dto";
+import { LikesDislikesDB, LikesDislikesInputDto } from "../dtos/posts/likesDislikes.dto";
 import { BadRequestError } from "../errors/BadRequestError";
 import { NotFoundError } from "../errors/NotFoundError";
 import { UnauthorizedError } from "../errors/UnauthorizedError";
@@ -58,12 +58,12 @@ export class PostBusiness {
         return output
     }
 
-    public createPost = async (input: CreatePostInputDto):Promise<void> => {
+    public createPost = async (input: CreatePostInputDto): Promise<void> => {
         const { content, token } = input
 
-        
+
         const payload = this.tokenManager.getPayload(token)
-        
+
         if (payload === null) {
             throw new BadRequestError("token inválido")
         }
@@ -153,7 +153,8 @@ export class PostBusiness {
         if (payload === null) {
             throw new BadRequestError("token inválido")
         }
-        const [postDb] = await this.postDatabase.findPostLikeByPostId(id)
+
+        const [postDb] = await this.postDatabase.findLikeInTableLikesByUserId(payload.id)
 
         if (!postDb) {
             const [result] = await this.postDatabase.findPostByPostId(id)
@@ -169,16 +170,19 @@ export class PostBusiness {
             await this.postDatabase.insertLikeInPost(input)
         } else {
             if (postDb.like === 1 && like === true) {
-                await this.postDatabase.deletePostFromTable(postDb.post_id)
+                await this.postDatabase.deleteLikeFromTableLikes(payload.id)
             }
             else if (postDb.like === 0 && like === false) {
-                await this.postDatabase.deletePostFromTable(postDb.post_id)
+                await this.postDatabase.deleteLikeFromTableLikes(payload.id)
+            }
+            
+            else if (postDb.like === 0 && like === true) {
+                await this.postDatabase.editLikeInPostByUserId(like, payload.id)
+            }
+
+            else if (postDb.like === 1 && like === false) {
+                await this.postDatabase.editLikeInPostByUserId(like, payload.id)
             }
         }
-
-
-        
-
     }
-
 }

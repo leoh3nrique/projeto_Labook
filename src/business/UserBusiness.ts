@@ -65,12 +65,13 @@ export class UserBusiness {
 
         const userDB = await this.userDatabase.findUsersByEmail(email)
         if (!userDB) {
-            throw new NotFoundError("email não encontrado")
+            throw new NotFoundError("Usuario não encontrado")
         }
 
         const hashedPassword = userDB.password
-        const isCorrect = this.hashManager.compare(password, hashedPassword)
-
+        
+        const isCorrect = await this.hashManager.compare(password, hashedPassword)
+        console.log(isCorrect)
         if (!isCorrect) {
             throw new BadRequestError("email ou senha inválidos")
         }
